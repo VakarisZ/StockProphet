@@ -10,6 +10,12 @@ from sklearn.preprocessing import MinMaxScaler
 import tensorflow
 from tensorflow.python.data import Dataset
 
+"""
+Vakaris Zilius IFF-5/9
+Destytojas Andrius Neciunas
+"""
+
+
 from api import API
 
 def showFrame(data):
@@ -29,6 +35,33 @@ def plotStockData(data):
     showArray('marketVolume', data[:, 2])
     plt.show()
 
+def prepareData(data, mins_in, mins_out):
+    """
+    :param data: x(features)*y(minutes length) data set
+    :param mins_in: how many minutes with all features in a row in output (min*features)
+    :param mins_out: how many minutes to predict
+    :return: X - 2d array x(minute after minute), y(input count)
+             Y - 2d array x(averages of n pretictable minutes), y(input count)
+    """
+    x = len(data[0])
+    flat_data = np.ravel(data)
+    cols_in = mins_in * x
+    rows_in = (len(data) - mins_in - mins_out)
+    rows_out = rows_in
+    cols_out = mins_out
+    training = [[0 for x in range(cols_in)] for y in range(rows_in)]
+    targets = [[0 for x in range(mins_out)] for y in range(rows_in)]
+    for idx, val in enumerate(training):
+        start = idx * 3
+        if start+(mins_in+mins_out)*3 < len(flat_data):
+            training[idx][:] = flat_data[start:(start+mins_in)*3]
+            targets[idx][:] = flat_data[(start+mins_in)*3:(start+mins_in)*3+(mins_out)*3]
+    return [training, targets[::3]]
+
+
+
+
+
 
 def main():
     #data = API.getMonthsData('atvi')
@@ -39,6 +72,7 @@ def main():
                    'marketNotional', 'marketOpen', 'notional', 'numberOfTrades', 'open', 'volume', 'close', 'minute', 'label',
                               'marketHigh', 'marketLow'], 1)
     all_data = all_data.values
+    all_data = prepareData(all_data, 30, 5)
     #Data count
     n = all_data.shape[0]
     #Colum count
@@ -66,18 +100,18 @@ def main():
 
     # Network
     # Model architecture parameters
-    n_stocks = 500
+    n_features = 3
     n_neurons_1 = 1024
     n_neurons_2 = 512
     n_neurons_3 = 256
     n_neurons_4 = 128
     n_target = 1
     # Placeholder
-    X = tensorflow.placeholder(dtype=tensorflow.float32, shape=[None, n_stocks])
+    X = tensorflow.placeholder(dtype=tensorflow.float32, shape=[None, n_features])
     Y = tensorflow.placeholder(dtype=tensorflow.float32, shape=[None])
 
     #hidden weights
-    W_hidden_1 = tensorflow.Variable(weight_initializer([n_stocks, n_neurons_1]))
+    W_hidden_1 = tensorflow.Variable(weight_initializer([n_features, n_neurons_1]))
     bias_hidden_1 = tensorflow.Variable(bias_initializer([n_neurons_1]))
     W_hidden_2 = tensorflow.Variable(weight_initializer([n_neurons_1, n_neurons_2]))
     bias_hidden_2 = tensorflow.Variable(bias_initializer([n_neurons_2]))
@@ -128,11 +162,6 @@ def main():
     batch_size = 256
 
     for e in range(epochs):
-
-        # Shuffle training data
-        shuffle_indices = np.random.permutation(np.arange(len(y_train)))
-        X_train = X_train[shuffle_indices]
-        y_train = y_train[shuffle_indices]
 
         # Minibatch training
         for i in range(0, len(y_train) // batch_size):
