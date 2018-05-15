@@ -35,28 +35,7 @@ def plotStockData(data):
     showArray('marketVolume', data[:, 2])
     plt.show()
 
-def prepareData(data, mins_in, mins_out):
-    """
-    :param data: x(features)*y(minutes length) data set
-    :param mins_in: how many minutes with all features in a row in output (min*features)
-    :param mins_out: how many minutes to predict
-    :return: X - 2d array x(minute after minute), y(input count)
-             Y - 2d array x(averages of n pretictable minutes), y(input count)
-    """
-    x = len(data[0])
-    flat_data = np.ravel(data)
-    cols_in = mins_in * x
-    rows_in = (len(data) - mins_in - mins_out)
-    rows_out = rows_in
-    cols_out = mins_out
-    training = [[0 for x in range(cols_in)] for y in range(rows_in)]
-    targets = [[0 for x in range(mins_out)] for y in range(rows_in)]
-    for idx, val in enumerate(training):
-        start = idx * 3
-        if start+(mins_in+mins_out)*3 < len(flat_data):
-            training[idx][:] = flat_data[start:(start+mins_in)*3]
-            targets[idx][:] = flat_data[(start+mins_in)*3:(start+mins_in)*3+(mins_out)*3]
-    return [training, targets[::3]]
+
 
 
 

@@ -1,7 +1,8 @@
 import urllib.request
 import json
 from datetime import timedelta, date
-
+import numpy as np
+import pandas
 
 class API(object):
 
@@ -65,5 +66,41 @@ class API(object):
     def getJsonFromFile(filename):
         return open(filename, 'r').read()
 
+    @staticmethod
+    def prepareData(data, mins_in, mins_out):
+        """
+        :param data: x(features)*y(minutes length) data set
+        :param mins_in: how many minutes with all features in a row in output (min*features)
+        :param mins_out: how many minutes to predict
+        :return: X - 2d array x(minute after minute), y(input count)
+                 Y - 2d array x(averages of n pretictable minutes), y(input count)
+        """
+        x = len(data[0])
+        y = len(data)
+        flat_data = np.ravel(data)
+        cols_in = mins_in * x
+        rows_in = (len(data) - mins_in - mins_out)
+        rows_out = rows_in
+        cols_out = mins_out * x
+        training = [[0 for x in range(cols_in)] for y in range(rows_in)]
+        targets = [[0 for x in range(mins_out)] for y in range(rows_in)]
+        for idx, val in enumerate(training):
+            start = idx * 3
+            if idx < y:
+                training[idx][:] = flat_data[start:start + cols_in]
+                temp = flat_data[start + cols_in:start + cols_in + cols_out]
+                targets[idx][:] = temp[::x]
+            else:
+                break
+        return [training, targets[::3]]
 
-
+    @staticmethod
+    def getPreparedData(mins_in, mins_out):
+        all_data = pandas.read_json(API.getJsonFromFile('atvi_new.json'), 'records')
+        all_data = all_data.drop(
+            ['changeOverTime', 'date', 'high', 'low', 'marketChangeOverTime', 'marketClose', 'average',
+             'marketNotional', 'marketOpen', 'notional', 'numberOfTrades', 'open', 'volume', 'close', 'minute', 'label',
+             'marketHigh', 'marketLow'], 1)
+        all_data = all_data.values
+        all_data = API.prepareData(all_data, mins_in, mins_out)
+        return all_data
