@@ -23,16 +23,17 @@ def showFrame(data):
     data.plot()
     plt.show()
 
-def showArray(label,data):
+def showArray(title, label,data):
     fig1 = plt.figure(label)
     ax = fig1.gca()
     plt.ylabel(label)
+    plt.title(title)
     ax.plot(data)
 
-def plotStockData(data):
-    showArray('average', data[:, 0])
-    showArray('marketNumberOfTrades', data[:, 1])
-    showArray('marketVolume', data[:, 2])
+def plotStockData(title, data):
+    showArray(title, 'average', data[:, 0])
+    showArray(title, 'marketNumberOfTrades', data[:, 1])
+    showArray(title, 'marketVolume', data[:, 2])
     plt.show()
 
 
@@ -46,11 +47,12 @@ def main():
     #data = API.getMonthsData('atvi')
     #API.printToFileJson('atvi_new.json', data)
     #API.printToFileVerbose('atvi_verbose.txt', data)
-    all_data = pandas.read_json(API.getJsonFromFile('atvi_new.json'), 'records')
+    all_data = pandas.read_json(API.getJsonFromFile('atvi_data.json'), 'records')
     all_data = all_data.drop(['changeOverTime', 'date', 'high', 'low', 'marketChangeOverTime', 'marketClose', 'average',
                    'marketNotional', 'marketOpen', 'notional', 'numberOfTrades', 'open', 'volume', 'close', 'minute', 'label',
                               'marketHigh', 'marketLow'], 1)
     all_data = all_data.values
+    plotStockData('ATVI',all_data)
     all_data = prepareData(all_data, 30, 5)
     #Data count
     n = all_data.shape[0]
