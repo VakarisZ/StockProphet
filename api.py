@@ -92,7 +92,7 @@ class API(object):
                 targets[idx][:] = temp[::x]
             else:
                 break
-        return [training, targets[::3]]
+        return [training, targets]
 
     @staticmethod
     def getPreparedData(mins_in, mins_out):
