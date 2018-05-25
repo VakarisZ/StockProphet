@@ -38,10 +38,7 @@ def plotStockData(title, data):
     plt.show()
 
 def getDataSet():
-	dataset = pd.read_json(API.getJsonFromFile('aapl_data.json'), 'records')
-	#dataset = dataset.drop(['changeOverTime', 'date', 'high', 'low', 'marketClose', 'average',
-	#			   'marketNotional', 'marketOpen', 'notional', 'numberOfTrades', 'open', 'volume', 'close', 'minute', 'label',
-	#						  'marketHigh', 'marketLow'], 1)
+	dataset = pd.read_json(API.getJsonFromFile('nvda_data.json'), 'records')
 	dataset = dataset.dropna()
 	dataset = dataset[['open', 'high', 'low', 'close']]
 	#dataset = dataset.values
@@ -59,8 +56,8 @@ def getDataSet():
 	return dataset
 	
 def main():
-	#data = API.getMonthsData("AAPL")
-	#API.printToFileJson("aapl_data.json", data)
+	#data = API.getMonthsData("NVDA")
+	#API.printToFileJson("nvda_data.json", data)
 	#return
 	dataset = getDataSet()
 	
@@ -73,41 +70,36 @@ def main():
 	sc = StandardScaler()
 	X_train = sc.fit_transform(X_train)
 	X_test = sc.transform(X_test)
-	print(X_train)
-	print(X_test)
-	#return
 	classifier = Sequential()
 	classifier.add(Dense(units = 128, kernel_initializer = 'uniform', activation = 'relu', input_dim = X.shape[1]))
 	classifier.add(Dense(units = 128, kernel_initializer = 'uniform', activation = 'relu'))
 	classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
 	customizedOptimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-	#customizedOptimizer = SGD(lr=0.000000000000001, momentum=0.0, decay=0.0, nesterov=False)
 	classifier.compile(optimizer = customizedOptimizer, loss = 'mean_squared_error', metrics = ['accuracy'])
 
 	classifier.fit(X_train, y_train, batch_size = 15, epochs = 150)
 
 	
 	y_pred = classifier.predict(X_test)
-	y_pred = (y_pred > 0.5)
+	#y_pred = (y_pred > 0.5)
 
 	dataset['y_pred'] = np.NaN
 	dataset.iloc[(len(dataset) - len(y_pred)):,-1:] = y_pred
 	trade_dataset = dataset.dropna()
-
 	
 	trade_dataset['actual'] = 0.
 	trade_dataset['actual'] = np.log(trade_dataset['close']/trade_dataset['close'].shift(1))
 	trade_dataset['actual'] = trade_dataset['actual'].shift(-1)
 
-	trade_dataset['predicted'] = 0.
-	trade_dataset['predicted'] = np.where( trade_dataset['y_pred'] == True, trade_dataset['actual'], - trade_dataset['actual'])
+	trade_dataset['prediction'] = 0.
+	trade_dataset['prediction'] = np.where( trade_dataset['y_pred'] > 0.5, (trade_dataset['actual'].shift(1) * trade_dataset['y_pred']), -(trade_dataset['actual'].shift(1) * trade_dataset['y_pred']))
 
 	trade_dataset['Cumulative Actual Values'] = np.cumsum(trade_dataset['actual'])
-	trade_dataset['Cumulative Predicted Values'] = np.cumsum(trade_dataset['predicted'])
+	trade_dataset['Cumulative Predicted Values'] = np.cumsum(trade_dataset['prediction'])
 
 	plt.figure(figsize=(10,5))
-	plt.plot(trade_dataset['Cumulative Actual Values'], color='r', label='Actual Values')
-	plt.plot(trade_dataset['Cumulative Predicted Values'], color='g', label='Predicted Values')
+	plt.plot(trade_dataset['Cumulative Actual Values'], color='r', label='Market movement')
+	plt.plot(trade_dataset['Cumulative Predicted Values'], color='g', label='Predicted movement')
 	plt.legend()
 	plt.show()
 	
