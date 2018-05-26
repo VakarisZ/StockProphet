@@ -18,11 +18,6 @@ import random
 TODO: fix output
 """
 
-def showFrame(data):
-    print(data.describe())
-    data.plot()
-    plt.show()
-
 def showArray(title, label,data):
     fig1 = plt.figure(label)
     ax = fig1.gca()
@@ -85,7 +80,11 @@ def main():
 
 	dataset['y_pred'] = np.NaN
 	dataset.iloc[(len(dataset) - len(y_pred)):,-1:] = y_pred
+	dataset = dataset[:len(dataset)-400]
 	trade_dataset = dataset.dropna()
+	
+	trade_dataset['change'] = trade_dataset['O-C']
+	trade_dataset['pred_confidence'] = trade_dataset['y_pred']
 	
 	trade_dataset['actual'] = 0.
 	trade_dataset['actual'] = np.log(trade_dataset['close']/trade_dataset['close'].shift(1))
@@ -100,6 +99,12 @@ def main():
 	plt.figure(figsize=(10,5))
 	plt.plot(trade_dataset['Cumulative Actual Values'], color='r', label='Market movement')
 	plt.plot(trade_dataset['Cumulative Predicted Values'], color='g', label='Predicted movement')
+	plt.legend()
+	plt.show()
+	
+	plt.figure(figsize=(10,5))
+	plt.plot(trade_dataset['change'], color='r', label='Market Change')
+	plt.plot(trade_dataset['pred_confidence'], color='g', label='Confidence of price rise, %')
 	plt.legend()
 	plt.show()
 	
