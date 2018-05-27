@@ -50,7 +50,16 @@ def getDataSet():
 	dataset = dataset.dropna()
 	return dataset
 	
+def condition(x, y):
+	if y == 1 and x > 0.5:
+		return True
+	elif y == 0 and x < 0.5:
+		return True
+	else:
+		return False
+	
 def main():
+	np.random.seed(31)
 	#data = API.getMonthsData("NVDA")
 	#API.printToFileJson("nvda_data.json", data)
 	#return
@@ -72,19 +81,19 @@ def main():
 	customizedOptimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 	classifier.compile(optimizer = customizedOptimizer, loss = 'mean_squared_error', metrics = ['accuracy'])
 
-	classifier.fit(X_train, y_train, batch_size = 15, epochs = 150)
+	history = classifier.fit(X_train, y_train, batch_size = 15, epochs = 500)
 
 	
 	y_pred = classifier.predict(X_test)
 	#y_pred = (y_pred > 0.5)
-
+	
 	dataset['y_pred'] = np.NaN
 	dataset.iloc[(len(dataset) - len(y_pred)):,-1:] = y_pred
 	dataset = dataset[:len(dataset)-400]
 	trade_dataset = dataset.dropna()
 	
-	trade_dataset['change'] = trade_dataset['O-C']
-	trade_dataset['pred_confidence'] = trade_dataset['y_pred']
+	#trade_dataset['change'] = trade_dataset['O-C']
+	#trade_dataset['pred_confidence'] = trade_dataset['y_pred']
 	
 	trade_dataset['actual'] = 0.
 	trade_dataset['actual'] = np.log(trade_dataset['close']/trade_dataset['close'].shift(1))
@@ -99,13 +108,20 @@ def main():
 	plt.figure(figsize=(10,5))
 	plt.plot(trade_dataset['Cumulative Actual Values'], color='r', label='Market movement')
 	plt.plot(trade_dataset['Cumulative Predicted Values'], color='g', label='Predicted movement')
+	plt.xlabel("minute")
+	plt.ylabel("price change")
 	plt.legend()
 	plt.show()
 	
-	plt.figure(figsize=(10,5))
-	plt.plot(trade_dataset['change'], color='r', label='Market Change')
-	plt.plot(trade_dataset['pred_confidence'], color='g', label='Confidence of price rise, %')
-	plt.legend()
+	plt.plot(history.history['acc'])
+	plt.xlabel("Epoch")
+	plt.ylabel("Accuracy")
 	plt.show()
+	
+	plt.plot(history.history['loss'])
+	plt.xlabel("Epoch")
+	plt.ylabel("Loss")
+	plt.show()
+	
 	
 main()
