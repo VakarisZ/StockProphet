@@ -1,4 +1,5 @@
+# Ignore generated files
 .idea/
 venv/
-ATVI_data
-atvi_data.json
+__pycache__/
+*.json
