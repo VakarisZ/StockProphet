@@ -85,7 +85,7 @@ class API(object):
         training = [[0 for x in range(cols_in)] for y in range(rows_in)]
         targets = [[0 for x in range(mins_out)] for y in range(rows_in)]
         for idx, val in enumerate(training):
-            start = idx * 3
+            start = idx * 2
             if idx < y:
                 training[idx][:] = flat_data[start:start + cols_in]
                 temp = flat_data[start + cols_in:start + cols_in + cols_out]
@@ -100,7 +100,7 @@ class API(object):
         all_data = all_data.drop(
             ['changeOverTime', 'date', 'high', 'low', 'marketChangeOverTime', 'marketClose', 'average',
              'marketNotional', 'marketOpen', 'notional', 'numberOfTrades', 'open', 'volume', 'close', 'minute', 'label',
-             'marketHigh', 'marketLow'], 1)
+             'marketHigh', 'marketLow', 'marketNumberOfTrades'], 1)
         all_data = all_data.values
         all_data = API.prepareData(all_data, mins_in, mins_out)
         return all_data
